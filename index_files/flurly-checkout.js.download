@@ -1,0 +1,34 @@
+document.addEventListener("DOMContentLoaded", function() {
+  Array.from(document.getElementsByTagName("a")).forEach(e => {
+    let t = e.getAttribute("href") || "";
+    if (t.indexOf("flurly.com/p/") > -1 || t.indexOf("flurly.com/m/") > -1) {
+      (t => {
+        let n = null,
+          o = null;
+        e.addEventListener("click", function(e) {
+          e.preventDefault(), o.redirectToCheckout({ sessionId: n });
+        }),
+          fetch("https://flurly.com/api/checkout/" + t, {
+            method: "POST",
+            referrer: location.href,
+            referrerPolicy: "unsafe-url",
+            body: JSON.stringify({ href: location.href })
+          })
+            .then(e => e.json())
+            .then(e => {
+              if (e.stripe_account) {
+                o = Stripe(e.stripe_token, { stripeAccount: e.stripe_account });
+              } else {
+                o = Stripe(e.stripe_token);
+              }
+              n = e.session_id;
+            });
+      })(
+        t
+          .split("/")
+          .slice(-1)
+          .pop()
+      );
+    }
+  });
+});
